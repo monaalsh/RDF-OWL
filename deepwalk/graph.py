@@ -37,6 +37,8 @@ class Graph(defaultdict):
   def __init__(self):
     super(Graph, self).__init__(list)
 
+  edges = dict()
+
   def nodes(self):
     return self.keys()
 
@@ -53,14 +55,14 @@ class Graph(defaultdict):
     return subgraph
 
   def make_undirected(self):
-  
+    
     t0 = time()
 
     for v in self.keys():
       for other in self[v]:
         if v != other:
           self[other].append(v)
-    
+          
     t1 = time()
     logger.info('make_directed: added missing edges {}s'.format(t1-t0))
 
@@ -71,7 +73,7 @@ class Graph(defaultdict):
     t0 = time()
     for k in iterkeys(self):
       self[k] = list(sorted(set(self[k])))
-    
+      
     t1 = time()
     logger.info('make_consistent: made consistent in {}s'.format(t1-t0))
 
@@ -88,7 +90,7 @@ class Graph(defaultdict):
       if x in self[x]: 
         self[x].remove(x)
         removed += 1
-    
+        
     t1 = time()
 
     logger.info('remove_self_loops: removed {} loops in {}s'.format(removed, (t1-t0)))
@@ -99,7 +101,7 @@ class Graph(defaultdict):
       for y in self[x]:
         if x == y:
           return True
-    
+        
     return False
 
   def has_edge(self, v1, v2):
@@ -153,7 +155,7 @@ class Graph(defaultdict):
 # TODO add build_walks in here
 
 def build_deepwalk_corpus(G, num_paths, path_length, alpha=0,
-                      rand=random.Random(0)):
+                          rand=random.Random(0)):
   walks = []
 
   nodes = list(G.nodes())
@@ -162,11 +164,11 @@ def build_deepwalk_corpus(G, num_paths, path_length, alpha=0,
     rand.shuffle(nodes)
     for node in nodes:
       walks.append(G.random_walk(path_length, rand=rand, alpha=alpha, start=node))
-  
+      
   return walks
 
 def build_deepwalk_corpus_iter(G, num_paths, path_length, alpha=0,
-                      rand=random.Random(0)):
+                               rand=random.Random(0)):
   walks = []
 
   nodes = list(G.nodes())
@@ -183,8 +185,8 @@ def clique(size):
 
 # http://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks-in-python
 def grouper(n, iterable, padvalue=None):
-    "grouper(3, 'abcdefg', 'x') --> ('a','b','c'), ('d','e','f'), ('g','x','x')"
-    return zip_longest(*[iter(iterable)]*n, fillvalue=padvalue)
+  "grouper(3, 'abcdefg', 'x') --> ('a','b','c'), ('d','e','f'), ('g','x','x')"
+  return zip_longest(*[iter(iterable)]*n, fillvalue=padvalue)
 
 def parse_adjacencylist(f):
   adjlist = []
@@ -194,7 +196,7 @@ def parse_adjacencylist(f):
       row = [introw[0]]
       row.extend(set(sorted(introw[1:])))
       adjlist.extend([row])
-  
+      
   return adjlist
 
 def parse_adjacencylist_unchecked(f):
@@ -202,7 +204,7 @@ def parse_adjacencylist_unchecked(f):
   for l in f:
     if l and l[0] != "#":
       adjlist.extend([[int(x) for x in l.strip().split()]])
-  
+      
   return adjlist
 
 def load_adjacencylist(file_, undirected=False, chunksize=10000, unchecked=True):
@@ -222,9 +224,9 @@ def load_adjacencylist(file_, undirected=False, chunksize=10000, unchecked=True)
     with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
       total = 0 
       for idx, adj_chunk in enumerate(executor.map(parse_func, grouper(int(chunksize), f))):
-          adjlist.extend(adj_chunk)
-          total += len(adj_chunk)
-  
+        adjlist.extend(adj_chunk)
+        total += len(adj_chunk)
+        
   t1 = time()
 
   logger.info('Parsed {} edges with {} chunks in {}s'.format(total, idx, t1-t0))
@@ -248,13 +250,15 @@ def load_edgelist(file_, undirected=True):
   G = Graph()
   with open(file_) as f:
     for l in f:
-      x, y = l.strip().split()[:2]
+      x, y, e = l.strip().split()[:3]
       x = int(x)
       y = int(y)
+      e = int(e)
       G[x].append(y)
+      G.edges[(x,y)] = e
       if undirected:
         G[y].append(x)
-  
+        G.edges[(y,x)] = e
   G.make_consistent()
   return G
 
@@ -309,7 +313,6 @@ def from_adjlist(adjlist):
 
 def from_adjlist_unchecked(adjlist):
     G = Graph()
-    
     for row in adjlist:
         node = row[0]
         neighbors = row[1:]
