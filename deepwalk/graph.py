@@ -37,7 +37,7 @@ class Graph(defaultdict):
   def __init__(self):
     super(Graph, self).__init__(list)
 
-  edges = dict()
+  edges = {}
 
   def nodes(self):
     return self.keys()
@@ -145,8 +145,12 @@ class Graph(defaultdict):
       cur = path[-1]
       if len(G[cur]) > 0:
         if rand.random() >= alpha:
-          path.append(rand.choice(G[cur]))
+          nextnode = rand.choice(G[cur])
+          edge = rand.choice(G.edges[(cur,nextnode)])
+          path.append(edge)
+          path.append(nextnode)
         else:
+          path.append(-1) # special edge -1 which is jump back to start node
           path.append(path[0])
       else:
         break
@@ -255,10 +259,16 @@ def load_edgelist(file_, undirected=True):
       y = int(y)
       e = int(e)
       G[x].append(y)
-      G.edges[(x,y)] = e
+      if (x,y) in G.edges:
+        G.edges[(x,y)].append(e)
+      else:
+        G.edges[(x,y)] = [e]
       if undirected:
         G[y].append(x)
-        G.edges[(y,x)] = e
+        if (y,x) in G.edges:
+          G.edges[(y,x)].append(e)
+        else:
+          G.edges[(y,x)] = [e]
   G.make_consistent()
   return G
 
