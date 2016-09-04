@@ -34,6 +34,11 @@ except AttributeError:
 logger = logging.getLogger(__name__)
 LOGFORMAT = "%(asctime).19s %(levelname)s %(filename)s: %(lineno)s %(message)s"
 
+def number_excluded_nodes(filename):
+    with open(filename) as f:
+        for i, l in enumerate(f):
+            pass
+    return i + 1
 
 def debug(type_, value, tb):
   if hasattr(sys, 'ps1') or not sys.stderr.isatty():
@@ -59,7 +64,15 @@ def process(args):
 
   print("Number of nodes: {}".format(len(G.nodes())))
 
-  num_walks = len(G.nodes()) * args.number_walks
+  if (os.path.isfile(format(args.excludlist))):
+    num_exlud = number_excluded_nodes(args.excludlist)
+    list_exclud = open(args.excludlist).readlines()
+    list_exclud = [ int(x) for x in list_exclud ]
+  else:
+    num_exlud = 0
+    list_exclud = []
+
+  num_walks = (len(G.nodes()) - num_exlud) * args.number_walks
 
   print("Number of walks: {}".format(num_walks))
 
@@ -69,7 +82,7 @@ def process(args):
 
   if data_size < args.max_memory_data_size:
     print("Walking...")
-    walks = graph.build_deepwalk_corpus(G, num_paths=args.number_walks,
+    walks = graph.build_deepwalk_corpus(G, list_exclud=list_exclud, num_paths=args.number_walks,
                                         path_length=args.walk_length, alpha=0, rand=random.Random(args.seed))
     print("Training...")
     model = Word2Vec(walks, size=args.representation_size, window=args.window_size, min_count=0, workers=args.workers)
@@ -78,7 +91,7 @@ def process(args):
     print("Walking...")
 
     walks_filebase = args.output + ".walks"
-    walk_files = serialized_walks.write_walks_to_disk(G, walks_filebase, num_paths=args.number_walks,
+    walk_files = serialized_walks.write_walks_to_disk(G, list_exclud, walks_filebase, num_paths=args.number_walks,
                                          path_length=args.walk_length, alpha=0, rand=random.Random(args.seed),
                                          num_workers=args.workers)
 
@@ -110,6 +123,9 @@ def main():
 
   parser.add_argument('--input', nargs='?', required=True,
                       help='Input graph file')
+
+  parser.add_argument('--excludlist',
+                      help='File containing ids of nodes to be excluded')
 
   parser.add_argument("-l", "--log", dest="log", default="INFO",
                       help="log verbosity level")
