@@ -24,7 +24,7 @@ test_requirements = [
 
 setup(
     name='deepwalk',
-    version='1.0.1-with-edges',
+    version='1.0.1-with-nodes-exclusion',
     description='DeepWalk online learning of social representations.',
     long_description=readme + '\n\n' + history,
     author='Bryan Perozzi',
