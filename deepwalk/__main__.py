@@ -69,6 +69,7 @@ def process(args):
     #num_exlud = number_excluded_nodes(args.excludlist)
     list_exclud = open(args.excludlist).readlines()
     list_exclud = [ int(x) for x in list_exclud ]
+    list_exclud = set(list_exclud)
     num_exlud = len(set(list_exclud))
   else:
     num_exlud = 0
