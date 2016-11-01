@@ -18,6 +18,7 @@ from skipgram import Skipgram
 from six import text_type as unicode
 from six import iteritems
 from six.moves import range
+import pdb
 
 import psutil
 from multiprocessing import cpu_count
@@ -65,18 +66,18 @@ def process(args):
   print("Number of nodes: {}".format(len(G.nodes())))
 
   if (os.path.isfile(format(args.excludlist))):
-    num_exlud = number_excluded_nodes(args.excludlist)
+    #num_exlud = number_excluded_nodes(args.excludlist)
     list_exclud = open(args.excludlist).readlines()
     list_exclud = [ int(x) for x in list_exclud ]
+    num_exlud = len(set(list_exclud))
   else:
     num_exlud = 0
     list_exclud = []
-
   if (num_exlud > 0):
     print("Number of nodes excluded from the walk: {}".format(num_exlud))
 
+  #num_walks = (len(G.nodes()) - num_exlud) * args.number_walks
   num_walks = (len(G.nodes()) - num_exlud) * args.number_walks
-
   print("Number of walks: {}".format(num_walks))
 
   data_size = num_walks * args.walk_length
